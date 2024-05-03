@@ -1,5 +1,7 @@
 .yarn
 node_modules
+npm-debug.log
+CONTRIBUTING.md
 scripts
 src
 .editorconfig
