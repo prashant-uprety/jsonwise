@@ -4,7 +4,9 @@
 
 Jsonwise is a local JSON database that allows you to effortlessly store, manage, and migrate your JSON data. With its ORM-like operations, schema definition, and CLI tools, Jsonwise provides a simple and lightweight solution for managing your JSON data.
 
-## Installation
+### Installation
+
+---
 
 Install Jsonwise via npm:
 
@@ -60,5 +62,5 @@ If you have any questions or need support, please open an issue on the Jsonwise 
 
 ## Acknowledgments
 
-Jsonwise is built on top of several open-source projects. We'd like to thank the maintainers of these projects for their hard work and contributions to the open-source community.
+Jsonwise is built on top of several open-source projects, including [list dependencies]. We'd like to thank the maintainers of these projects for their hard work and contributions to the open-source community.
 ```
