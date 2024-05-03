@@ -1,5 +1,5 @@
 {
-  "name": "@prashant-uprety/jsonwise",
+  "name": "jsonwise",
   "description": "Effortlessly store, manage and migrate your JSON data with Jsonwise, your local JSON database",
   "packageManager": "yarn@4.1.0",
   "version": "0.0.1",
