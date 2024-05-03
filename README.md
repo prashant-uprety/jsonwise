@@ -63,4 +63,4 @@ If you have any questions or need support, please open an issue on the Jsonwise 
 
 ## Acknowledgments
 
-Jsonwise is built on top of several open-source projects, including [list dependencies]. We'd like to thank the maintainers of these projects for their hard work and contributions to the open-source community.
+Jsonwise is built on top of several open-source projects. We'd like to thank the maintainers of these projects for their hard work and contributions to the open-source community.
