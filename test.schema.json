@@ -1,0 +1,21 @@
+{
+    "models": [
+      {
+        "name": "User",
+        "fields": [
+          {"name": "id", "type": "number"},
+          {"name": "name", "type": "string"},
+          {"name": "email", "type": "string"}
+        ]
+      },
+      {
+        "name": "Address",
+        "fields": [
+          {"name": "street", "type": "string"},
+          {"name": "city", "type": "string"},
+          {"name": "state", "type": "string"},
+          {"name": "zip", "type": "string"}
+        ]
+      }
+    ]
+  }
