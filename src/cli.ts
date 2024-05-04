@@ -59,10 +59,9 @@ program
     const schemaFile = cmd.schemaFile;
     const outputDir = cmd.outputDir || 'jsonwise';
 
-    let config: { outputDir?: string } = {};
     if (cmd.config) {
       const configJson = fs.readFileSync(cmd.config, 'utf-8');
-      config = JSON.parse(configJson);
+      JSON.parse(configJson);
     }
 
     try {
