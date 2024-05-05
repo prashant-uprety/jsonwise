@@ -2,7 +2,7 @@
   "name": "jsonwise",
   "description": "Effortlessly store, manage and migrate your JSON data with Jsonwise, your local JSON database",
   "packageManager": "yarn@4.1.0",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "author": "Prashant Uprety <prashantuprety90@gmail.com>",
   "engines": {
