@@ -4,9 +4,9 @@ import * as fs from 'fs';
 /**
  * Interface for JSON data
  */
-type JsonData = {
+interface JsonData {
   [key: string]: any;
-};
+}
 
 /**
  * Jsonwise class for working with JSON files
@@ -55,6 +55,22 @@ class Jsonwise<T> {
   }
 
   /**
+   * Find Nested
+   */
+  private findNested(item: any, key: string, value: any): boolean {
+    if (typeof value === 'object') {
+      for (const nestedKey in value) {
+        if (!this.findNested(item[key], nestedKey, value[nestedKey])) {
+          return false;
+        }
+      }
+      return true;
+    } else if (item[key] !== value) {
+      return false;
+    }
+    return true;
+  }
+  /**
    * Create a new entry in the JSON file
    *
    * @param obj The object to create
@@ -72,6 +88,7 @@ class Jsonwise<T> {
     this.saveData();
     return newObj;
   }
+
   /**
    * find an entry from the JSON file
    *
@@ -79,35 +96,25 @@ class Jsonwise<T> {
    * @returns The read entry or null if not found
    */
   find(where: { [key: string]: any }): T | null {
-    const stack: { obj: JsonData; query?: { [key: string]: any } }[] = [
-      { obj: this.data, query: where },
-    ];
-    let result: T | null = null;
-
-    while (stack.length > 0) {
-      const { obj, query } = stack.pop() || {};
-
-      if (!obj || !query) continue;
-
+    for (const item of Object.values(this.data)) {
       let match = true;
-      for (const key in query) {
-        const value = query[key];
+      for (const key in where) {
+        const value = where[key];
         if (typeof value === 'object') {
-          stack.push({ obj: obj[key], query: value });
-          match = false;
-          break;
-        } else if (obj[key] !== value) {
+          if (!this.findNested(item, key, value)) {
+            match = false;
+            break;
+          }
+        } else if (item[key] !== value) {
           match = false;
           break;
         }
       }
-
       if (match) {
-        result = obj as T;
-        break;
+        return item;
       }
     }
-    return result;
+    return null;
   }
 
   /**
@@ -117,24 +124,26 @@ class Jsonwise<T> {
    * @param obj The updated object
    * @returns The updated object or null if not found
    */
-  update(id: string, obj: T): T | null {
-    if (!this.data[id]) return null;
-    this.data[id] = obj;
-    this.saveData();
-    return obj;
+  update(__id: number, obj: T): T | null {
+    for (let i = 0; i < this.data.length; i++) {
+      if (this.data[i].__id === __id) {
+        Object.assign(this.data[i], obj);
+        this.saveData();
+        return this.data[i];
+      }
+    }
+    return null;
   }
-
   /**
    * destroy an entry from the JSON file
    *
-   * @param __id The ID of the entry to delete
+   * @param id The ID of the entry to delete
    * @returns True if deleted, false if not found
    */
   destroy(__id: number): boolean {
-    if (!this.data) return false;
     for (let i = 0; i < this.data.length; i++) {
-      if (this.data[i] && this.data[i] !== null && this.data[i].__id === __id) {
-        delete this.data[i];
+      if (this.data[i].__id === __id) {
+        this.data.splice(i, 1);
         this.saveData();
         return true;
       }
