@@ -1,127 +1,173 @@
-import fs from 'fs';
+// jsonwise.ts
+import * as fs from 'fs';
 
-interface Options {
-  asyncWrite: boolean;
-  syncOnWrite: boolean;
-  jsonSpaces: number;
-  stringify: (
-    value: any,
-    replacer?: (key: string, value: any) => any,
-    space?: string | number
-  ) => string;
-  parse: (text: string, reviver?: (key: any, value: any) => any) => any;
+/**
+ * Interface for JSON data
+ */
+interface JsonData {
+  [key: string]: any;
 }
 
-const defaultOptions: Options = {
-  asyncWrite: false,
-  syncOnWrite: true,
-  jsonSpaces: 4,
-  stringify: JSON.stringify,
-  parse: JSON.parse,
-};
-
-type Storage = Record<string, any>;
-
-class jsonwise {
+/**
+ * Jsonwise class for working with JSON files
+ *
+ * @typeparam T The type of data stored in the JSON file
+ */
+class Jsonwise<T> {
+  /**
+   * File path of the JSON file
+   */
   private filePath: string;
-  private options: Options;
-  private storage: Storage;
 
-  constructor(filePath: string, options?: Partial<Options>) {
-    if (!filePath || !filePath.length) {
-      throw new Error('Missing file path argument.');
-    }
+  /**
+   * JSON data stored in memory
+   */
+  private data: JsonData;
 
+  /**
+   * Constructor
+   *
+   * @param filePath The file path of the JSON file
+   */
+  constructor(filePath: string) {
     this.filePath = filePath;
-    this.options = { ...defaultOptions, ...options };
-    this.storage = {};
-
-    this.initStorage();
+    this.data = this.loadData();
   }
 
-  private initStorage(): void {
+  /**
+   * Load data from the JSON file
+   *
+   * @returns The loaded data
+   */
+  private loadData(): T[] {
     try {
-      fs.accessSync(this.filePath, fs.constants.F_OK);
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
-        fs.writeFileSync(this.filePath, '{}');
-      } else {
-        throw new Error(`Error while accessing file "${this.filePath}": ${err.message}`);
-      }
-    }
-
-    try {
-      const data = fs.readFileSync(this.filePath).toString();
-      this.storage = this.options.parse(data);
-    } catch (err: any) {
-      throw new Error(`Error while reading file "${this.filePath}": ${err.message}`);
+      return JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+    } catch (error) {
+      return [];
     }
   }
 
-  set(key: string, value: any): void {
-    this.storage[key] = value;
-    if (this.options && this.options.syncOnWrite) this.sync();
+  /**
+   * Save data to the JSON file
+   */
+  private saveData(): void {
+    fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2));
   }
 
-  get(key: string): any {
-    return key in this.storage ? this.storage[key] : undefined;
-  }
-
-  has(key: string): boolean {
-    return key in this.storage;
-  }
-
-  delete(key: string): boolean | undefined {
-    const retVal = key in this.storage ? delete this.storage[key] : undefined;
-    if (this.options && this.options.syncOnWrite) this.sync();
-    return retVal;
-  }
-
-  deleteAll(): jsonwise {
-    for (const key in this.storage) {
-      if (Object.prototype.hasOwnProperty.call(this.storage, key)) {
-        this.delete(key);
-      }
-    }
-    return this;
-  }
-
-  sync(): void {
-    if (this.options && this.options.asyncWrite) {
-      fs.writeFile(
-        this.filePath,
-        this.options.stringify(this.storage, undefined, this.options.jsonSpaces),
-        (err) => {
-          if (err) throw err;
-        }
-      );
-    } else {
-      try {
-        fs.writeFileSync(
-          this.filePath,
-          this.options.stringify(this.storage, undefined, this.options.jsonSpaces)
-        );
-      } catch (err: any) {
-        if (err.code === 'EACCES') {
-          throw new Error(`Cannot access path "${this.filePath}".`);
-        } else {
-          throw new Error(`Error while writing to path "${this.filePath}": ${err}`);
+  /**
+   * Find Nested
+   */
+  private findNested(item: any, key: string, value: any): boolean {
+    if (typeof value === 'object') {
+      for (const nestedKey in value) {
+        if (!this.findNested(item[key], nestedKey, value[nestedKey])) {
+          return false;
         }
       }
+      return true;
+    } else if (item[key] !== value) {
+      return false;
     }
+    return true;
+  }
+  /**
+   * Create a new entry in the JSON file
+   *
+   * @param obj The object to create
+   * @returns The created object
+   */
+  create(obj: Omit<T, '__id'> & JsonData): T {
+    this.data = this.data || [];
+    const newId =
+      this.data.length === 0
+        ? 1
+        : ((Math.max(...this.data.map((item: T) => (item as { __id: number }).__id)) +
+            1) as unknown as T);
+    const newObj = { ...obj, __id: newId } as T;
+    this.data.push(newObj);
+    this.saveData();
+    return newObj;
   }
 
-  JSON(storage?: Record<string, any>): Record<string, any> {
-    if (storage) {
-      try {
-        JSON.parse(this.options.stringify(storage));
-        this.storage = storage;
-      } catch (err) {
-        throw new Error('Given parameter is not a valid JSON object.');
+  /**
+   * find an entry from the JSON file
+   *
+   * @param id The ID of the entry to read
+   * @returns The read entry or null if not found
+   */
+  find(where: { [key: string]: any }): T | null {
+    for (const item of Object.values(this.data)) {
+      let match = true;
+      for (const key in where) {
+        const value = where[key];
+        if (typeof value === 'object') {
+          if (!this.findNested(item, key, value)) {
+            match = false;
+            break;
+          }
+        } else if (item[key] !== value) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return item;
       }
     }
-    return JSON.parse(this.options.stringify(this.storage));
+    return null;
+  }
+
+  /**
+   * Update an entry in the JSON file
+   *
+   * @param id The ID of the entry to update
+   * @param obj The updated object
+   * @returns The updated object or null if not found
+   */
+  update(__id: number, obj: T): T | null {
+    for (let i = 0; i < this.data.length; i++) {
+      if (this.data[i].__id === __id) {
+        Object.assign(this.data[i], obj);
+        this.saveData();
+        return this.data[i];
+      }
+    }
+    return null;
+  }
+  /**
+   * destroy an entry from the JSON file
+   *
+   * @param id The ID of the entry to delete
+   * @returns True if deleted, false if not found
+   */
+  destroy(__id: number): boolean {
+    for (let i = 0; i < this.data.length; i++) {
+      if (this.data[i].__id === __id) {
+        this.data.splice(i, 1);
+        this.saveData();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Find all entries in the JSON file
+   *
+   * @returns An array of all entries
+   */
+  findAll(): T[] {
+    return Object.values(this.data);
+  }
+
+  /**
+   * Count the number of entries in the JSON file
+   *
+   * @returns The count of entries
+   */
+  count(): number {
+    return Object.keys(this.data).length;
   }
 }
 
-export default jsonwise;
+export default Jsonwise;

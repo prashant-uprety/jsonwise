@@ -4,9 +4,7 @@
 
 Jsonwise is a local JSON database that allows you to effortlessly store, manage, and migrate your JSON data. With its ORM-like operations, schema definition, and CLI tools, Jsonwise provides a simple and lightweight solution for managing your JSON data.
 
-### Installation
-
----
+## Installation
 
 Install Jsonwise via npm:
 
@@ -17,9 +15,8 @@ npm install jsonwise
 ## Features
 
 - **ORM-like Operations:** Perform CRUD operations on your JSON data using familiar ORM syntax.
-- **Schema Definition:** Define your data structure using a schema, making it easy to create, read, update, and delete data.
+- **Schema Definition:** Define your data structure and JSON files using a schema, making it easy to create, read, update, and delete data.
 - **CLI for Schema Management:** Use the Jsonwise CLI to create, update, and manage your schema.
-- **Migration to SQL Databases:** Migrate your data from JSON to SQL databases for scalability and performance.
 - **Local Storage:** Jsonwise stores your data locally, making it easy to work with JSON files on your machine.
 
 ## Usage
@@ -27,7 +24,6 @@ npm install jsonwise
 1. **Define a Schema:** Use the Jsonwise CLI to define a schema for your data.
 2. **Create Models:** Use the CLI to create models based on your schema.
 3. **Manipulate Data:** Use Jsonwise methods to manipulate your JSON data.
-4. **Migrate to SQL:** When your data outgrows the JSON format, use the migration tools to move your data to a SQL database.
 
 ## Use Case
 
@@ -51,16 +47,74 @@ To get started with Jsonwise, follow these steps:
 2. Define a schema for your data using the Jsonwise CLI
 3. Create models based on your schema
 4. Start manipulating your JSON data using Jsonwise methods
-5. When ready, migrate your data to a SQL database using the migration tools
 
-## Contributing
+## Usage Guide
 
-Jsonwise is an open-source project and welcomes contributions from the community. If you'd like to contribute, please fork the repository and submit a pull request.
+1. **Define a Schema:** Use the Jsonwise CLI to define a schema for your data.
 
-## Support
+## Example schema
 
-If you have any questions or need support, please open an issue on the Jsonwise GitHub repository.
+```json
+{
+  "models": [
+    {
+      "name": "User",
+      "fields": [
+        { "name": "id", "type": "number" },
+        { "name": "addrress", "type": "object" },
+        { "name": "age", "type": "number", "optional": true }
+      ]
+    },
+    {
+      "name": "Post",
+      "fields": [
+        { "name": "id", "type": "number" },
+        { "name": "title", "type": "string" },
+        { "name": "content", "type": "array" },
+        { "name": "author", "type": "array", "reference": "User" }
+      ]
+    }
+  ]
+}
+```
 
-## Acknowledgments
+Valid Types: 'string' | 'number' | 'boolean' | 'array' | 'object'
+Reference: You can reference another model in a field by specifying the reference attribute with the name of the referenced model.
 
-Jsonwise is built on top of several open-source projects. We'd like to thank the maintainers of these projects for their hard work and contributions to the open-source community.
+```bash
+jsonwise generate -- -s path/to/schema.json
+```
+
+2. **Generated JSON Files:** Jsonwise CLI will generate JSON files based on your schema and will attach a reserved field called \_\_id which will able to define the record the ID is auto incrementing you can use this to perform queries no need to explicitly define it. These files will be created in your working directory at directory namd.
+
+### Generate Model Files
+
+Jsonwise will automatically generate the interfaces and typesafe interface.
+
+### Manipulate Data
+
+```typescript
+import { Post, PostJsonwise } from 'jsonwise/generated/Post.methods';
+import { User, UserJsonwise } from 'jsonwise/generated/User.methods';
+
+const userJsonwise = new UserJsonwise();
+const postJsonwise = new PostJsonwise();
+
+// Create a new user
+const newUser = userJsonwise.create({ id: 1, addrress: { Location: 'My location' } });
+
+// Find a user
+const foundUser = userJsonwise.find({ __id: 1 });
+
+// Update a user
+const updatedUser = userJsonwise.update(1, { name: 'Jane Doe' });
+
+// Delete a user
+const userDeleted = userJsonwise.destroy(1);
+
+// Find all users
+const allUsers = userJsonwise.findAll();
+
+// Count users
+const userCount = userJsonwise.count();
+```
