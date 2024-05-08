@@ -21,3 +21,5 @@ yarn.lock
 .github/*
 .nvmrc
 .DS_Store
+src/__tests__/jsonwise.test.ts
+

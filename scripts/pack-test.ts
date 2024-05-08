@@ -1,7 +1,14 @@
 import { execa } from 'execa';
 import signale from 'signale';
 
-const ALLOWED_FILES = ['LICENSE', 'README.md', 'package.json'];
+const ALLOWED_FILES = [
+  'LICENSE',
+  'README.md',
+  'package.json',
+  'src/cli.ts',
+  'src/jsonwise.d.ts',
+  'src/jsonwise.ts',
+];
 
 async function packCheck() {
   const { stdout } = await execa('npm', ['pack', '--dry-run', '--json']);

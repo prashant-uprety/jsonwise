@@ -179,7 +179,7 @@ function generateModelFiles(
   // Create the parent index.ts file
   const parentDir = path.dirname(config.generatedDir);
   const indexTsFile = path.join(parentDir, 'index.ts');
-  let indexTsContent = `export * from './generated';\n`;
+  const indexTsContent = `export * from './generated';\n`;
 
   fs.writeFileSync(indexTsFile, indexTsContent);
 }
